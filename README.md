@@ -6,7 +6,9 @@ Stay calm and earn aura. Crack — and lose it.
 Built for the **Microsoft Agents League 2026** · Creative Apps track · with **GitHub Copilot**.
 
 🎥 **[Watch the demo video](https://youtu.be/azKi2DrrRoM)**
+## Architecture
 
+![AuraFarm architecture](aurafarm-architecture.png)
 ---
 
 ## What it is
