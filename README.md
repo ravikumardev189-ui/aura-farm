@@ -8,7 +8,7 @@ Built for the **Microsoft Agents League 2026** · Creative Apps track · with **
 🎥 **[Watch the demo video](https://youtu.be/azKi2DrrRoM)**
 ## Architecture
 
-![AuraFarm architecture](aurafarm-architecture.png)
+![AuraFarm architecture](aurafarm-architecture.png)(https://raw.githubusercontent.com/ravikumardev189-ui/aura-farm/refs/heads/main/aurafarm_architecture.png)
 ---
 
 ## What it is
