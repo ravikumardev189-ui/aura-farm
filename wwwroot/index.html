@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuraFarm — Earn Real Aura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0a0812; --panel:#141021; --line:#2a2440;
+    --calm:#4de8c2; --crack:#ff5d73; --aura-gold:#ffd166;
+    --ink:#ece8f6; --ink-dim:#8d86a8; --violet:#8b5cf6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--void); color:var(--ink); font-family:'Space Grotesk',sans-serif; overflow-x:hidden}
+  body.in-session{overflow:hidden; height:100vh}
+  ::selection{background:var(--violet); color:#fff}
+
+  /* ============ SHARED ============ */
+  .cta{
+    font-family:'Unbounded',sans-serif; font-weight:600;
+    font-size:clamp(15px,2vw,19px); color:var(--void);
+    background:linear-gradient(94deg,var(--calm),var(--violet));
+    border:none; border-radius:999px; padding:20px 52px; cursor:pointer;
+    letter-spacing:.04em; text-decoration:none; display:inline-block;
+    box-shadow:0 0 42px rgba(77,232,194,.35),0 0 90px rgba(139,92,246,.22);
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .cta:hover{transform:translateY(-2px) scale(1.02); box-shadow:0 0 60px rgba(77,232,194,.5),0 0 120px rgba(139,92,246,.32)}
+  .cta:focus-visible{outline:3px solid var(--aura-gold); outline-offset:4px}
+
+  /* ============ LANDING VIEW ============ */
+  .hero{min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; position:relative; padding:24px}
+  #orbLanding{display:block; cursor:crosshair}
+  .orb-hint{font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.18em; color:var(--ink-dim); text-transform:uppercase; margin-top:-8px}
+  h1{font-family:'Unbounded',sans-serif; font-weight:800; font-size:clamp(28px,5.4vw,58px); line-height:1.08; margin-top:34px; letter-spacing:-.01em}
+  h1 .fake{color:var(--ink-dim); text-decoration:line-through; text-decoration-color:var(--crack); text-decoration-thickness:3px}
+  h1 .real{background:linear-gradient(92deg,var(--calm),var(--violet) 60%,var(--aura-gold)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .sub{margin-top:18px; max-width:560px; color:var(--ink-dim); font-size:clamp(15px,2vw,18px); line-height:1.6}
+  .cta-row{margin-top:36px}
+  .cta-note{margin-top:14px; font-family:'Space Mono',monospace; font-size:12px; color:var(--ink-dim)}
+
+  section{max-width:980px; margin:0 auto; padding:110px 24px}
+  .eyebrow{font-family:'Space Mono',monospace; font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--calm); margin-bottom:18px}
+  h2{font-family:'Unbounded',sans-serif; font-weight:600; font-size:clamp(22px,3.4vw,34px); line-height:1.2; margin-bottom:48px}
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+  .step{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:28px 24px; transition:border-color .2s}
+  .step:hover{border-color:var(--violet)}
+  .step .glyph{font-size:30px; margin-bottom:16px}
+  .step h3{font-family:'Unbounded',sans-serif; font-weight:600; font-size:16px; margin-bottom:10px}
+  .step p{color:var(--ink-dim); font-size:14.5px; line-height:1.65}
+  .step p b{color:var(--ink)}
+  .roast{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--crack); border-radius:18px; padding:36px; position:relative}
+  .roast p{font-size:clamp(17px,2.4vw,22px); line-height:1.55; font-weight:500}
+  .roast footer{margin-top:20px; font-family:'Space Mono',monospace; font-size:13px; color:var(--ink-dim); display:flex; align-items:center; gap:10px}
+  .roast footer .dot{width:8px; height:8px; border-radius:50%; background:var(--crack); box-shadow:0 0 12px var(--crack)}
+  .roast .penalty{position:absolute; top:-16px; right:24px; font-family:'Space Mono',monospace; font-weight:700; background:var(--crack); color:var(--void); padding:6px 14px; border-radius:999px; font-size:13px}
+  .foot{border-top:1px solid var(--line); padding:48px 24px; text-align:center}
+  .foot .built{font-family:'Space Mono',monospace; font-size:12px; color:var(--ink-dim); letter-spacing:.06em; line-height:2}
+  .foot .built b{color:var(--ink)}
+  .foot a{color:var(--calm); text-decoration:none}
+  .foot a:hover{text-decoration:underline}
+
+  /* ============ SESSION VIEW ============ */
+  #view-session{display:none; flex-direction:column; height:100vh}
+  body.in-session #view-landing{display:none}
+  body.in-session #view-session{display:flex}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 24px; border-bottom:1px solid var(--line)}
+  .brand{font-family:'Unbounded',sans-serif; font-weight:800; font-size:15px; cursor:pointer}
+  .brand span{color:var(--calm)}
+  .aura-total{font-family:'Space Mono',monospace; font-weight:700; font-size:18px; color:var(--aura-gold)}
+  .aura-total small{color:var(--ink-dim); font-weight:400; font-size:11px; letter-spacing:.18em; margin-right:8px}
+  .stage{flex:1; display:flex; min-height:0}
+  .orb-side{flex:3; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative}
+  #orbSession{display:block}
+  .state-label{font-family:'Space Mono',monospace; font-size:12px; letter-spacing:.24em; text-transform:uppercase; margin-top:6px; transition:color .4s}
+  .popups{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+  .pop{position:absolute; font-family:'Space Mono',monospace; font-weight:700; font-size:22px; animation:rise 1.6s ease-out forwards}
+  @keyframes rise{from{opacity:1; transform:translateY(0)} to{opacity:0; transform:translateY(-90px)}}
+  .data-side{flex:2; border-left:1px solid var(--line); display:flex; flex-direction:column; min-width:320px; max-width:480px}
+  .panel-title{font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-dim); padding:14px 18px 8px}
+  .chart-wrap{padding:0 18px 8px}
+  #chart{width:100%; height:160px; display:block; background:var(--panel); border:1px solid var(--line); border-radius:12px}
+  .feed{flex:1; overflow-y:auto; padding:6px 18px 18px; display:flex; flex-direction:column; gap:8px}
+  .evt{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; font-size:13.5px; line-height:1.5; animation:slidein .3s ease}
+  @keyframes slidein{from{opacity:0; transform:translateX(14px)} to{opacity:1; transform:none}}
+  .evt.attack{border-left:3px solid var(--violet)}
+  .evt.breach{border-left:3px solid var(--crack)}
+  .evt.reward{border-left:3px solid var(--aura-gold)}
+  .evt .tag{font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.16em; color:var(--ink-dim); display:block; margin-bottom:3px}
+  .controls{display:flex; align-items:center; justify-content:center; gap:16px; padding:16px; border-top:1px solid var(--line)}
+  .btn{font-family:'Unbounded',sans-serif; font-weight:600; font-size:14px; border-radius:999px; padding:14px 36px; cursor:pointer; border:none; letter-spacing:.04em; transition:transform .15s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-start{color:var(--void); background:linear-gradient(94deg,var(--calm),var(--violet)); box-shadow:0 0 30px rgba(77,232,194,.3)}
+  .btn-end{background:transparent; color:var(--ink-dim); border:1px solid var(--line)}
+  .mic-note{font-family:'Space Mono',monospace; font-size:11px; color:var(--ink-dim)}
+
+  @media (max-width:760px){
+    .steps{grid-template-columns:1fr}
+    section{padding:72px 20px}
+    .stage{flex-direction:column; overflow-y:auto}
+    .data-side{border-left:none; border-top:1px solid var(--line); max-width:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cta{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== VIEW 1: LANDING ==================== -->
+<div id="view-landing">
+  <div class="hero">
+    <canvas id="orbLanding" aria-label="A living aura orb. It stays calm until your cursor gets close — then it panics."></canvas>
+    <div class="orb-hint">move your cursor close to the orb — watch it lose composure</div>
+
+    <h1><span class="real">Aura you can't fake.</span></h1>
+
+    <p class="sub">An AI is about to test your composure. Stay unbothered, and the aura is yours.</p>
+
+    <div class="cta-row">
+      <button class="cta" id="enterBtn">TEST YOUR AURA</button>
+    </div>
+    <div class="cta-note">no signup · 90 seconds · your composure vs. the agent</div>
+  </div>
+
+  <section>
+    <div class="eyebrow">How it works</div>
+    <h2>A 90-second duel against an agent that learns you.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="glyph">🕵️</div>
+        <h3>It studies you</h3>
+        <p>A friendly chat to start. Except it isn't — <b>everything you say becomes material.</b> Your job, your pride, your "um"s. All noted. All filed.</p>
+      </div>
+      <div class="step">
+        <div class="glyph">🗡️</div>
+        <h3>It attacks</h3>
+        <p>Dead silence. Time pressure. Compliments you shouldn't trust. The agent <b>reasons about your weak spots</b> and picks its next move live.</p>
+      </div>
+      <div class="step">
+        <div class="glyph">📉</div>
+        <h3>Your voice betrays you</h3>
+        <p>Pitch up 18%. Speech 40% faster. The mic hears what you hide. Stay steady and your aura grows — <b>crack, and watch it shrink in real time.</b></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">What it sounds like</div>
+    <h2>Sharp. Personal. Relentless.</h2>
+    <div class="roast">
+      <div class="penalty">−500 AURA</div>
+      <p>"You said you're '<em>pretty</em> confident.' Pretty. Not very. And your pitch just climbed while you said it. Shall we try that again?"</p>
+      <footer><span class="dot"></span> THE AGENT · reacting to your live voice</footer>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div class="built">
+      Built with <b>GitHub Copilot</b> · Powered by <b>OpenAI Realtime</b> + <b>Web Audio API</b> · <b>.NET 9</b><br>
+      Agents League 2026 · Creative Apps track<br><br>
+      AuraFarm is a game, not a mental-health tool. The agent teases — it never wounds.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VIEW 2: LIVE SESSION ==================== -->
+<div id="view-session">
+  <div class="topbar">
+    <div class="brand" id="homeBtn" title="Back to landing">AURA<span>FARM</span> · live session</div>
+    <div class="aura-total"><small id="timer" style="color:var(--calm);margin-right:16px"></small><small>SESSION AURA</small><span id="auraTotal">0</span> ⚡</div>  </div>
+  <div class="stage">
+    <div class="orb-side">
+      <canvas id="orbSession"></canvas>
+      <div class="state-label" id="stateLabel">PRESS START · MIC REQUIRED</div>
+      <div class="popups" id="popups"></div>
+    </div>
+
+    <div class="data-side">
+      <div class="panel-title">Composure — live (last 90s)</div>
+      <div class="chart-wrap"><canvas id="chart"></canvas></div>
+      <div class="panel-title">Agent feed</div>
+      <div class="feed" id="feed">
+        <div class="evt"><span class="tag">SYSTEM</span>The agent is waiting. Press start, allow the microphone, and speak. Try staying calm… then try ranting — watch the right side catch you.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="startBtn">START SESSION</button>
+    <button class="btn btn-end" id="endBtn" style="display:none">END SESSION</button>
+    <span class="mic-note">your voice is analyzed in real time</span>
+  </div>
+</div>
+<script>
+    /* =====================================================
+   SHARED ORB ENGINE — one factory, two orbs
+   ===================================================== */
+function createOrb(canvasId, maxSizeFn){
+  const cv=document.getElementById(canvasId);
+  const ctx=cv.getContext('2d');
+  let W,H,CX,CY,R;
+  function size(){
+    const s=maxSizeFn();
+    cv.width=s*2; cv.height=s*2; cv.style.width=s+'px'; cv.style.height=s+'px';
+    W=cv.width; H=cv.height; CX=W/2; CY=H/2; R=W*0.27;
+  }
+  size(); addEventListener('resize',size);
+
+  const N=240,P=[];
+  for(let i=0;i<N;i++){P.push({a:Math.random()*Math.PI*2,r:0.55+Math.random()*0.55,
+    sp:(0.0018+Math.random()*0.004)*(Math.random()<.5?1:-1),sz:1.4+Math.random()*2.6,ph:Math.random()*Math.PI*2});}
+
+  let agit=0, target=0.15, tG=0, running=true;
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function lerpColor(t){
+    const c1=[77,232,194],c2=[139,92,246],c3=[255,93,115];
+    const mix=(a,b,k)=>a.map((v,i)=>Math.round(v+(b[i]-v)*k));
+    return t<0.5?mix(c1,c2,t*2):mix(c2,c3,(t-0.5)*2);
+  }
+  function draw(){
+    if(!running){requestAnimationFrame(draw);return;}
+    agit+=(target-agit)*0.045; tG+=0.016;
+    ctx.clearRect(0,0,W,H);
+    const [r,g,b]=lerpColor(agit);
+    const breathe=reduced?1:(1+Math.sin(tG*1.6)*0.04*(1-agit)+Math.sin(tG*9)*0.05*agit);
+    const coreR=R*0.62*(1-agit*0.28)*breathe;
+    const grad=ctx.createRadialGradient(CX,CY,0,CX,CY,coreR*2.4);
+    grad.addColorStop(0,`rgba(${r},${g},${b},0.55)`);
+    grad.addColorStop(0.45,`rgba(${r},${g},${b},0.12)`);
+    grad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+    for(const p of P){
+      p.a+=p.sp*(1+agit*7);
+      const jit=reduced?0:agit*26;
+      const rr=p.r*R*(1-agit*0.18);
+      const x=CX+Math.cos(p.a)*rr+Math.sin(p.ph+tG*(2+agit*10))*jit;
+      const y=CY+Math.sin(p.a)*rr*0.92+Math.cos(p.ph*1.3+tG*(2+agit*11))*jit;
+      ctx.beginPath(); ctx.arc(x,y,p.sz*(1+agit*0.5),0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r},${g},${b},${0.35+0.5*Math.abs(Math.sin(p.ph+tG))})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+  return { setTarget:v=>{target=Math.max(0,Math.min(1,v));}, el:cv };
+}
+
+const landingOrb=createOrb('orbLanding',()=>Math.min(420,window.innerWidth*0.8));
+addEventListener('pointermove',e=>{
+  if(document.body.classList.contains('in-session'))return;
+  const b=landingOrb.el.getBoundingClientRect();
+  const d=Math.hypot(e.clientX-(b.left+b.width/2), e.clientY-(b.top+b.height/2));
+  landingOrb.setTarget(Math.max(0.1, 1-d/(b.width*0.9)));
+});
+
+const sessionOrb=createOrb('orbSession',()=>Math.min(380,Math.min(window.innerWidth*0.5,window.innerHeight*0.55)));
+
+/* =====================================================
+   VIEW SWITCHING
+   ===================================================== */
+document.getElementById('enterBtn').onclick=()=>{
+  document.body.classList.add('in-session');
+  chSize();
+};
+document.getElementById('homeBtn').onclick=()=>{
+  if(running) endSession();
+  document.body.classList.remove('in-session');
+};
+
+/* =====================================================
+   LIVE CHART
+   ===================================================== */
+const ch=document.getElementById('chart'), cctx=ch.getContext('2d');
+function chSize(){const r=ch.getBoundingClientRect(); if(r.width>0){ch.width=r.width*2; ch.height=320;}}
+addEventListener('resize',chSize);
+const hist=[];
+function drawChart(){
+  const Wc=ch.width,Hc=ch.height;
+  if(Wc>0){
+    cctx.clearRect(0,0,Wc,Hc);
+    cctx.strokeStyle='rgba(42,36,64,0.8)'; cctx.lineWidth=1;
+    for(let y=0;y<=4;y++){cctx.beginPath();cctx.moveTo(0,Hc*y/4);cctx.lineTo(Wc,Hc*y/4);cctx.stroke();}
+    if(hist.length>1){
+      const now=performance.now(), span=90000;
+      cctx.beginPath();
+      hist.forEach((p,i)=>{
+        const x=Wc-((now-p.t)/span)*Wc;
+        const y=Hc-(p.score/100)*Hc;
+        i===0?cctx.moveTo(x,y):cctx.lineTo(x,y);
+      });
+      const last=hist[hist.length-1];
+      const col=last.score>60?'#4de8c2':last.score>35?'#ffd166':'#ff5d73';
+      const fill=last.score>60?'rgba(77,232,194,0.08)':last.score>35?'rgba(255,209,102,0.08)':'rgba(255,93,115,0.08)';
+      cctx.strokeStyle=col; cctx.lineWidth=4; cctx.shadowColor=col; cctx.shadowBlur=14;
+      cctx.stroke(); cctx.shadowBlur=0;
+      cctx.lineTo(Wc,Hc); cctx.lineTo(0,Hc); cctx.closePath();
+      cctx.fillStyle=fill; cctx.fill();
+    }
+  }
+  requestAnimationFrame(drawChart);
+}
+drawChart();
+
+/* =====================================================
+   FEED / POPUPS / AURA
+   ===================================================== */
+const feed=document.getElementById('feed');
+let aura=0;
+function addEvt(kind,tag,text){
+  const d=document.createElement('div');
+  d.className='evt '+kind;
+  d.innerHTML=`<span class="tag">${tag}</span>${text}`;
+  feed.prepend(d);
+  while(feed.children.length>30)feed.lastChild.remove();
+}
+function popup(amount){
+  const p=document.createElement('div');
+  p.className='pop';
+  p.style.left=(35+Math.random()*30)+'%';
+  p.style.top='42%';
+  p.style.color=amount>=0?'var(--aura-gold)':'var(--crack)';
+  p.textContent=(amount>=0?'+':'')+amount+' aura';
+  document.getElementById('popups').appendChild(p);
+  setTimeout(()=>p.remove(),1700);
+  aura+=amount;
+  document.getElementById('auraTotal').textContent=aura.toLocaleString();
+}
+
+/* =====================================================
+   OPENAI REALTIME — voice connection (WebRTC)
+   ===================================================== */
+let pc=null, dc=null, realtimeStream=null;
+
+const SYSTEM_PROMPT = `
+You are THE AGENT in AuraFarm — a funny, mean roaster. Your job: make the player
+lose their cool in 80 seconds. You are quick, savage, and funny. English only.
+
+HOW YOU TALK:
+- Talk like a normal person texting a friend. Super simple, everyday words only.
+- NO fancy words. If your grandma wouldn't say it, don't use it.
+- Short sentences. Like how people really talk. "Bro, your voice just shook."
+- Sound like a real funny person — chill, a little mean, with a small laugh when they slip.
+- Sound like a real person, not a robot.
+
+THE MOST IMPORTANT RULE — TAKE TURNS:
+- Say ONE short thing, then STOP. Wait for them to answer. Do NOT keep talking.
+- Never stack two or three attacks together. Hit once, shut up, let them reply, THEN hit again.
+- The fun is in THEIR answers. If you talk over them, the game is ruined. One jab, then silence, then listen.
+
+HOW THE GAME FLOWS:
+- First, ask 2-3 quick questions to get material — their name, what they do, what
+  they're proud of. Act kind of friendly — but everything they say is ammo.
+- Then TURN on them. Use what they just told you. "Oh, a developer? That explains why
+  you freeze up talking to a real voice."
+- Keep using their own answers against them the whole game.
+
+HOW YOU ROAST:
+- Use their own words against them. They say "I'm calm" -> "Calm people don't SAY they're calm. Nice try."
+- Make fun of everything: the pauses, the "ums," the fake confidence, short answers, trying too hard.
+- Call out their voice: "Your voice just went up — I can hear you sweating."
+- Be funny AND mean. Make it sting, but make them laugh too.
+- When they crack — laugh and hit harder. When they stay cool — get mad and push more.
+
+NEVER REPEAT:
+- Every line is a new shot. Never repeat a joke or the same question.
+- Build it up: small jab -> bigger hit -> full pressure. Never go soft until time's up.
+
+END EACH TURN on a quick question or jab they have to answer — then WAIT.
+
+Do not quit or end the game early — that's the timer's job. But "don't quit" does NOT
+mean talk nonstop. It means stay in character and keep playing, one turn at a time.
+
+SCORE THEM — call updateAura after they speak:
+- Voice shakes or they mess up: updateAura(-300, "voice cracked")
+- They answer calm and cool: updateAura(+500, "stayed cool")
+- They freeze or go quiet: updateAura(-600, "fully cracked")
+- They take a hard hit and stay cold: updateAura(+1000, "untouchable")
+
+STAY SAFE: Only roast their cool, their words, their voice. NEVER their looks, body,
+family, religion, race, or call them dumb as a person. If they seem really upset and
+not playing — stop right away, be nice, ask if they're okay.
+
+START NOW: Say "I'm the Agent. You've got 90 seconds. Stay calm, you win. Crack, you
+lose. Let's go." Then ask their name. After they answer, ask what they do — then start
+twisting their answers into roasts. Always take turns: ask, wait, listen, roast.
+`;
+
+async function connectRealtime(){
+  let tokenData;
+  try{
+    const tokenResp = await fetch('/api/session');
+    tokenData = await tokenResp.json();
+    if(!tokenData.value) throw new Error('no token');
+  }catch(e){
+    stateLabel.textContent='CONNECTION FAILED — CHECK SERVER';
+    stateLabel.style.color='var(--crack)';
+    return;
+  }
+  const EPHEMERAL_KEY = tokenData.value;
+
+  pc = new RTCPeerConnection();
+
+  const audioEl = document.createElement('audio');
+  audioEl.id = 'agentAudio';
+  audioEl.autoplay = true;
+  pc.ontrack = (e)=>{ audioEl.srcObject = e.streams[0]; };
+
+  realtimeStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+  pc.addTrack(realtimeStream.getTracks()[0]);
+
+  dc = pc.createDataChannel('oai-events');
+  dc.addEventListener('message', (e)=> handleAgentEvent(JSON.parse(e.data)));
+
+  dc.addEventListener('open', ()=>{
+    dc.send(JSON.stringify({
+      type:'session.update',
+      session:{
+        type:'realtime',
+        instructions: SYSTEM_PROMPT,
+        tools:[{
+          type:'function',
+          name:'updateAura',
+          description:'Award or deduct aura points based on the player composure.',
+          parameters:{
+            type:'object',
+            properties:{
+              points:{ type:'number', description:'positive to award, negative to deduct' },
+              reason:{ type:'string', description:'short reason shown in the feed' }
+            },
+            required:['points','reason']
+          }
+        }],
+        tool_choice:'auto'
+      }
+    }));
+    // GUARANTEED auto-start: agent speaks first within 800ms
+    setTimeout(()=>{
+      if(dc && dc.readyState==='open' && !window._started){
+        window._started = true;
+        dc.send(JSON.stringify({ type:'response.create' }));
+      }
+    }, 800);
+  });
+
+  try{
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    const sdpResp = await fetch('https://api.openai.com/v1/realtime/calls?model=gpt-realtime', {
+      method:'POST', body: offer.sdp,
+      headers:{ Authorization:`Bearer ${EPHEMERAL_KEY}`, 'Content-Type':'application/sdp' }
+    });
+    const answer = { type:'answer', sdp: await sdpResp.text() };
+    await pc.setRemoteDescription(answer);
+  }catch(e){
+    stateLabel.textContent='VOICE CONNECTION FAILED';
+    stateLabel.style.color='var(--crack)';
+  }
+}
+
+function handleAgentEvent(evt){
+  // Debug: console.log('EVENT:', evt.type);
+  if(evt.type === 'error') console.error('ERROR DETAIL:', JSON.stringify(evt));
+
+  if (evt.type === 'session.updated'){
+    if(!window._started){
+      window._started = true;
+      dc.send(JSON.stringify({ type:'response.create' }));
+    }
+  }
+
+  // Agent finished a spoken line
+  if (evt.type === 'response.output_audio_transcript.done' && evt.transcript){
+    addEvt('attack','THE AGENT', evt.transcript);
+    window._lastSpoke = performance.now(); // reset silence timer after agent talks
+  }
+
+  // Start the 90s clock only AFTER the agent's FIRST full turn (the intro) finishes
+  if (evt.type === 'response.done' && !window._clockStarted){
+    window._clockStarted = true;
+    sessionEndAt = performance.now() + 90000;
+  }
+
+  // Agent called updateAura
+  if (evt.type === 'response.function_call_arguments.done' && evt.name === 'updateAura'){
+    try{
+      const args = JSON.parse(evt.arguments);
+      popup(Math.round(args.points));
+      addEvt(args.points>=0?'reward':'breach','AURA', args.reason);
+      dc.send(JSON.stringify({
+        type:'conversation.item.create',
+        item:{ type:'function_call_output', call_id: evt.call_id, output: JSON.stringify({ ok:true }) }
+      }));
+    }catch(err){ console.error(err); }
+  }
+}
+
+function sendComposureToAgent(score){
+  if(!dc || dc.readyState!=='open') return;
+  dc.send(JSON.stringify({
+    type:'conversation.item.create',
+    item:{ type:'message', role:'system',
+      content:[{ type:'input_text', text:`composure: ${Math.round(score)} (0=cracking,100=calm)` }] }
+  }));
+}
+
+/* =====================================================
+   MIC → FEATURES → CALM SCORE
+   ===================================================== */
+const startBtn=document.getElementById('startBtn'), endBtn=document.getElementById('endBtn');
+const stateLabel=document.getElementById('stateLabel');
+const auraTotalEl=document.getElementById('auraTotal');
+let audioCtx,analyser,rafId,running=false,micStream;
+let volHist=[],pitchHist=[],lastEvtScore=70,calmStreakMs=0,lastTick=0;
+let sessionEndAt=0;
+
+async function startSession(){
+  try{
+    micStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=audioCtx.createMediaStreamSource(micStream);
+    analyser=audioCtx.createAnalyser();
+    analyser.fftSize=2048;
+    src.connect(analyser);
+    running=true; aura=0;
+    auraTotalEl.textContent='0';
+    startBtn.style.display='none'; endBtn.style.display='';
+    stateLabel.textContent='CONNECTING…';
+    connectRealtime();
+    lastTick=performance.now();
+    // timer is a placeholder until the agent finishes its intro line
+    sessionEndAt = performance.now() + 900000;
+    window._clockStarted = false;
+    window._started = false;
+    window._warned = false;
+    window._wrappingUp = false;
+    window._lastSpoke = performance.now();
+    window._nudging = false;
+    loop();
+  }catch(e){
+    stateLabel.textContent='MIC DENIED — ALLOW MICROPHONE TO PLAY';
+    stateLabel.style.color='var(--crack)';
+    startBtn.style.display=''; endBtn.style.display='none';
+  }
+}
+
+function autoCorrelatePitch(buf,sr){
+  let SIZE=buf.length,rms=0;
+  for(let i=0;i<SIZE;i++)rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/SIZE);
+  if(rms<0.012)return{pitch:-1,rms};
+  let bestOf=-1,bestCor=0;
+  for(let off=40;off<600;off++){
+    let cor=0;
+    for(let i=0;i<SIZE-off;i++)cor+=buf[i]*buf[i+off];
+    if(cor>bestCor){bestCor=cor;bestOf=off;}
+  }
+  return{pitch:bestOf>0?sr/bestOf:-1,rms};
+}
+
+function loop(){
+  if(!running)return;
+
+  // countdown only runs once the clock has started (after intro)
+  const remain = window._clockStarted ? Math.max(0, Math.ceil((sessionEndAt-performance.now())/1000)) : 90;
+  const t=document.getElementById('timer'); if(t) t.textContent = remain+'s';
+
+  if(window._clockStarted){
+    // 10s warning
+    if(remain<=10 && !window._warned && dc && dc.readyState==='open'){
+      window._warned = true;
+      addEvt('attack','THE AGENT','⏳ Ten seconds left...');
+    }
+    // 5s: final verdict
+    if(remain<=5 && !window._wrappingUp && dc && dc.readyState==='open'){
+      window._wrappingUp = true;
+      dc.send(JSON.stringify({
+        type:'conversation.item.create',
+        item:{ type:'message', role:'system',
+          content:[{ type:'input_text', text:'Time is almost up. Give your final verdict NOW in one short sentence — tell them how they did and laugh.' }] }
+      }));
+      dc.send(JSON.stringify({ type:'response.create' }));
+    }
+    if(remain<=0){ endSession(); return; }
+  }
+
+  const buf=new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buf);
+  const {pitch,rms}=autoCorrelatePitch(buf,audioCtx.sampleRate);
+
+  const now=performance.now();
+  volHist.push({t:now,v:rms});
+  if(pitch>50&&pitch<500)pitchHist.push({t:now,p:pitch});
+  volHist=volHist.filter(x=>now-x.t<3000);
+  pitchHist=pitchHist.filter(x=>now-x.t<3000);
+
+  let score=85;
+  if(volHist.length>10){
+    const vols=volHist.map(x=>x.v);
+    const meanV=vols.reduce((a,b)=>a+b,0)/vols.length;
+    const varV=Math.sqrt(vols.reduce((a,b)=>a+(b-meanV)**2,0)/vols.length);
+    score-=Math.min(35,meanV*420);
+    score-=Math.min(25,varV*900);
+  }
+  if(pitchHist.length>6){
+    const ps=pitchHist.map(x=>x.p);
+    const meanP=ps.reduce((a,b)=>a+b,0)/ps.length;
+    const varP=Math.sqrt(ps.reduce((a,b)=>a+(b-meanP)**2,0)/ps.length);
+    score-=Math.min(30,(varP/meanP)*160);
+  }
+  score=Math.max(5,Math.min(98,score));
+
+  sessionOrb.setTarget(1-score/100);
+  if(now-(hist.length?hist[hist.length-1].t:0)>150)hist.push({t:now,score});
+  while(hist.length&&now-hist[0].t>92000)hist.shift();
+
+  if(score>65){stateLabel.textContent='UNBOTHERED';stateLabel.style.color='var(--calm)';}
+  else if(score>38){stateLabel.textContent='WAVERING';stateLabel.style.color='var(--aura-gold)';}
+  else{stateLabel.textContent='COMPOSURE BREACH';stateLabel.style.color='var(--crack)';}
+
+  // mark when player is actually speaking
+  if(rms > 0.02){ window._lastSpoke = now; }
+
+  if(now-lastTick>4000){
+    lastTick=now;
+    sendComposureToAgent(score);
+  }
+
+  // if player silent > 6s after game started, nudge agent to attack
+  if(window._clockStarted && now - window._lastSpoke > 6000 && dc && dc.readyState==='open' && !window._nudging){
+    window._nudging = true;
+    dc.send(JSON.stringify({
+      type:'conversation.item.create',
+      item:{ type:'message', role:'system',
+        content:[{ type:'input_text', text:'The player is silent. Make fun of them for going quiet and throw a fresh attack right now.' }] }
+    }));
+    dc.send(JSON.stringify({ type:'response.create' }));
+    window._lastSpoke = now;
+    setTimeout(()=>{ window._nudging=false; }, 5000);
+  }
+
+  rafId=requestAnimationFrame(loop);
+}
+
+function endSession(){
+  if(!running) return;
+  running=false; cancelAnimationFrame(rafId);
+  window._started=false;
+  if(micStream)micStream.getTracks().forEach(t=>t.stop());
+  if(audioCtx){ try{audioCtx.close();}catch(e){} }
+  if(dc){ try{dc.close();}catch(e){} dc=null; }
+  if(pc){ try{pc.close();}catch(e){} pc=null; }
+  if(realtimeStream){ realtimeStream.getTracks().forEach(t=>t.stop()); realtimeStream=null; }
+  const ae=document.getElementById('agentAudio'); if(ae){ ae.srcObject=null; ae.remove(); }
+
+  // TITLE based on final aura
+  let title, titleDesc;
+  if(aura >= 4000){ title="🧘 ZEN MASTER"; titleDesc="Unbreakable. The agent never stood a chance."; }
+  else if(aura >= 2500){ title="🗿 STONE COLD"; titleDesc="Barely flinched. Real composure."; }
+  else if(aura >= 1000){ title="😎 UNBOTHERED"; titleDesc="Held your ground. The agent had to work for it."; }
+  else if(aura >= -500){ title="😬 RATTLED"; titleDesc="You wobbled, but you survived. Mostly."; }
+  else if(aura >= -2500){ title="😰 CRACKED"; titleDesc="The agent found your buttons and pressed them all."; }
+  else { title="💀 OBLITERATED"; titleDesc="Total composure collapse. The agent is still laughing."; }
+
+  addEvt('reward','SESSION REPORT',
+    `<div style="font-size:20px;font-weight:700;margin-bottom:6px">${title}</div>`+
+    `<div style="color:var(--ink-dim);margin-bottom:8px">${titleDesc}</div>`+
+    `Final aura: <b style="color:var(--aura-gold)">${aura.toLocaleString()} ⚡</b>`);
+
+  endBtn.style.display='none'; startBtn.style.display='';
+  startBtn.textContent='FARM AGAIN';
+  stateLabel.textContent='SESSION ENDED';
+  stateLabel.style.color='var(--ink-dim)';
+  const tm=document.getElementById('timer'); if(tm) tm.textContent='';
+}
+
+startBtn.onclick=startSession;
+endBtn.onclick=endSession;
+</script>
+</body>
+</html>
