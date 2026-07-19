@@ -1,0 +1,36 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+stages:
+- stage: Build
+  displayName: 'Build and Test'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build ASP.NET Core App'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET 9 SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '9.0.x'
+
+    - script: dotnet restore
+      displayName: 'Restore NuGet packages'
+
+    - script: dotnet build --configuration $(buildConfiguration)
+      displayName: 'Build the project'
+
+    - script: dotnet publish --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
+      displayName: 'Publish build output'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish artifact for later stages'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
