@@ -9,7 +9,7 @@ variables:
 
 stages:
 - stage: Build
-  displayName: 'Build and Test'
+  displayName: 'Build'
   jobs:
   - job: BuildJob
     displayName: 'Build ASP.NET Core App'
@@ -34,3 +34,27 @@ stages:
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
+
+- stage: Test
+  displayName: 'Test'
+  dependsOn: Build
+  jobs:
+  - job: TestJob
+    displayName: 'Run Unit Tests'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET 9 SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '9.0.x'
+
+    - script: dotnet test --configuration $(buildConfiguration) --logger trx --results-directory $(Agent.TempDirectory)
+      displayName: 'Run unit tests'
+
+    - task: PublishTestResults@2
+      displayName: 'Publish test results'
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '*.trx'
+        searchFolder: '$(Agent.TempDirectory)'
