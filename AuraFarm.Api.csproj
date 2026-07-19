@@ -7,4 +7,11 @@
     <UserSecretsId>089da96b-607a-4495-9066-b858d4100562</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Aurafarm.Api.Tests\**" />
+    <Content Remove="Aurafarm.Api.Tests\**" />
+    <EmbeddedResource Remove="Aurafarm.Api.Tests\**" />
+    <None Remove="Aurafarm.Api.Tests\**" />
+  </ItemGroup>
+
 </Project>

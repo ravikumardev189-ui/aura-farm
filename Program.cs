@@ -52,3 +52,5 @@ app.MapGet("/api/session", async () =>
 });
 
 app.Run();
+
+public partial class Program { }
